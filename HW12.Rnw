@@ -49,12 +49,41 @@ alternative.
 \begin{enumerate}
   \item What values of $t_{20}$ provide statistically discernible support for the
   alternative hypothesis?
+<<size="scriptsize", warning=F, message=F>>= 
+set.seed(5656)
+alpha <- 0.05
+n1 <- 20
+(t.20 <- qt(0.95, df = n1-1))
+@
+Therefore $t_{20} \in [1.729133,\infty)$ provides statistically discernible support for the alternative hypothesis.
   \item What values of $t_{30}$ provide statistically discernible support for the
   alternative hypothesis?
+<<size="scriptsize", warning=F, message=F>>= 
+n2 <- 30
+(t.30 <- qt(0.95, df = n2-1))
+@
+Therefore $t_{30} \in [1.699127,\infty)$ provides statistically discernible support for the alternative hypothesis.
   \item Suppose $f_X(x)$ is a Laplace distribution with $a=0$ and $b=4.0$.
   Conduct a simulation study to assess the Type I error rate of this approach.\\
   \textbf{Note:} You can use the \texttt{rlaplace()} function from the \texttt{VGAM}
   package for \texttt{R} \citep{VGAM}.
+<<size="scriptsize", warning=F, message=F>>= 
+library(VGAM)
+a <- 0
+b <- 4
+it <- 1000
+reject.count <- 0
+
+for(i in 1:it){
+  x <- rlaplace(n2, a, b)
+  t20 <- mean(x[1:n1])/(sd(x[1:n1])/sqrt(n1))
+  if(t20 >= t.20){
+    reject.count <- reject.count + 1
+  }
+}  
+(error.rate <- reject.count / it)
+@
+Therefore the Type I error rate is 0.052.
   \item \textbf{Optional Challenge:} Can you find a value of $\alpha<0.05$ that yields a 
   Type I error rate of 0.05?
 \end{enumerate}
@@ -71,12 +100,87 @@ alternative.
   \begin{enumerate}
     \item What proportion of the time do we make an error of Type I for a
     left-tailed test?
+<<size="scriptsize", warning=F, message=F>>= 
+n <- 15
+a1 <- 10
+a2 <- 2
+b1 <- 2
+b2 <- 10
+mean1 <- a1/(a1+b1)
+mean2 <- a2/(a2+b2)
+mean3 <- a1/(a1+b2)
+tcrit.one <- qt(0.95, df = n-1)
+tcrit.two <- qt(0.975, df = n-1)
+rej.left.10.2 <- 0
+rej.left.2.10 <- 0
+rej.left.10.10 <- 0
+rej.right.10.2 <- 0
+rej.right.2.10 <- 0
+rej.right.10.10 <- 0
+rej.two.10.2 <- 0
+rej.two.2.10 <- 0
+rej.two.10.10 <- 0
+
+for(i in 1:it){
+  b.10.2 <- rbeta(n,a1,b1)
+  t.10.2 <- (mean(b.10.2)-mean1) / (sd(b.10.2)/sqrt(n))
+  b.2.10 <- rbeta(n,a2,b2)
+  t.2.10 <- (mean(b.2.10)-mean2) / (sd(b.2.10)/sqrt(n))
+  b.10.10 <- rbeta(n,a1,b2)
+  t.10.10 <- (mean(b.10.10)-mean3) / (sd(b.10.10)/sqrt(n))
+  if(t.10.2 <= -tcrit.one){
+    rej.left.10.2 <- rej.left.10.2 + 1
+  }
+  if(t.2.10 <= -tcrit.one){
+    rej.left.2.10 <- rej.left.2.10 + 1
+  }
+  if(t.10.10 <= -tcrit.one){
+    rej.left.10.10 <- rej.left.10.10 + 1
+  }
+  if(t.10.2 >= tcrit.one){
+    rej.right.10.2 <- rej.right.10.2 + 1
+  }
+  if(t.2.10 >= tcrit.one){
+    rej.right.2.10 <- rej.right.2.10 + 1
+  }
+  if(t.10.10 >= tcrit.one){
+    rej.right.10.10 <- rej.right.10.10 + 1
+  }
+  if(t.10.2 <= -tcrit.two | t.10.2 >= tcrit.two){
+    rej.two.10.2 <- rej.two.10.2 + 1
+  }
+  if(t.2.10 <= -tcrit.two | t.2.10 >= tcrit.two){
+    rej.two.2.10 <- rej.two.2.10 + 1
+  }
+  if(t.10.10 <= -tcrit.two | t.10.10 >= tcrit.two){
+    rej.two.10.10 <- rej.two.10.10 + 1
+  }
+}
+(error.left.10.2 <- rej.left.10.2 / it)
+(error.left.2.10 <- rej.left.2.10 / it)
+(error.left.10.10 <- rej.left.10.10 / it)
+@
+Therefore the Type I error rate for a left-tailed test ranges from 0.023 to 0.074 in our set of distributions.
     \item What proportion of the time do we make an error of Type I for a
     right-tailed test?
+<<size="scriptsize", warning=F, message=F>>= 
+(error.right.10.2 <- rej.right.10.2 / it)
+(error.right.2.10 <- rej.right.2.10 / it)
+(error.right.10.10 <- rej.right.10.10 / it)
+@
+Therefore the Type I error rate for a right-tailed test ranges from 0.022 to 0.078 in our set of distributions.
     \item What proportion of the time do we make an error of Type I for a
     two-tailed test?
+<<size="scriptsize", warning=F, message=F>>= 
+(error.two.10.2 <- rej.two.10.2 / it)
+(error.two.2.10 <- rej.two.2.10 / it)
+(error.two.10.10 <- rej.two.10.10 / it)
+@
+Therefore the Type I error rate for a two-tailed test ranges from 0.052 to 0.059 in our set of distributions.
     \item How does skewness of the underlying population distribution effect
     Type I error across the test types?
+    
+In a right-skewed distribution, e.g. Beta(10,2), the Type I error rate from a left-tailed test is substantially lower (0.023), while the error rate from a right-tailed test is substantially higher (0.078). In a left-skewed distribution, e.g. Beta(2,10), the reverse effect is present (0.074 vs. 0.022). In a symmetric distribution, e.g. Beta(10,10), error rate is not significantly impacted by the chosen t-test (ranges from 0.054 to 0.056).
   \end{enumerate}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
